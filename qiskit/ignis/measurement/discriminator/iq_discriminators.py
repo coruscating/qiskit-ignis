@@ -13,7 +13,6 @@
 # that they have been altered from the originals.
 
 # pylint: disable=invalid-name
-
 """
 IQ Discriminator module to discriminate date in the IQ Plane.
 """
@@ -42,9 +41,10 @@ class IQDiscriminationFitter(BaseDiscriminationFitter):
     Abstract discriminator that implements the data formatting for IQ
     level 1 data.
     """
-
-    def __init__(self, cal_results: Union[Result, List[Result]],
-                 qubit_mask: List[int], expected_states: List[str] = None,
+    def __init__(self,
+                 cal_results: Union[Result, List[Result]],
+                 qubit_mask: List[int],
+                 expected_states: List[str] = None,
                  standardize: bool = False,
                  schedules: Union[List[str], List[Schedule]] = None):
         """
@@ -116,7 +116,8 @@ class IQDiscriminationFitter(BaseDiscriminationFitter):
 
         return self._scale_data(xdata)
 
-    def get_ydata(self, results: Union[Result, List[Result]],
+    def get_ydata(self,
+                  results: Union[Result, List[Result]],
                   schedule_type_to_get: int,
                   schedules: Union[List[str], List[Schedule]] = None):
         """
@@ -152,7 +153,7 @@ class IQDiscriminationFitter(BaseDiscriminationFitter):
                 try:
                     iq_data = result.get_memory(schedule)
                     n_shots = iq_data.shape[0]
-                    ydata.extend([self._expected_state[shed_name]]*n_shots)
+                    ydata.extend([self._expected_state[shed_name]] * n_shots)
                 except QiskitError:
                     pass
 
@@ -191,7 +192,8 @@ class IQDiscriminationFitter(BaseDiscriminationFitter):
 
         return xdata
 
-    def plot(self, axs=None,
+    def plot(self,
+             axs=None,
              show_boundary: bool = False,
              show_fitting_data: bool = True,
              flag_misclassified: bool = False,
@@ -295,8 +297,10 @@ class IQDiscriminationFitter(BaseDiscriminationFitter):
 
                 # Plot the data by expected state.
                 for exp_state in data:
-                    ax.scatter(data[exp_state]['I'], data[exp_state]['Q'],
-                               label=exp_state, alpha=0.5)
+                    ax.scatter(data[exp_state]['I'],
+                               data[exp_state]['Q'],
+                               label=exp_state,
+                               alpha=0.5)
 
                     if flag_misclassified:
                         y_disc = np.array(self.discriminate(self._xdata))
@@ -304,7 +308,9 @@ class IQDiscriminationFitter(BaseDiscriminationFitter):
                         misclassified = x_data[y_disc != y_data]
                         ax.scatter(misclassified[:, q_idx],
                                    misclassified[:, n_qubits + q_idx],
-                                   color='r', alpha=0.5, marker='x')
+                                   color='r',
+                                   alpha=0.5,
+                                   marker='x')
 
                 ax.legend(frameon=True)
 
@@ -341,8 +347,10 @@ class IQDiscriminationFitter(BaseDiscriminationFitter):
 
         return xx, yy
 
-    def plot_xdata(self, axs,
-                   results: Union[Result, List[Result]], color: str = None):
+    def plot_xdata(self,
+                   axs,
+                   results: Union[Result, List[Result]],
+                   color: str = None):
         """
         Add the relevant IQ data from the Qiskit Result, or list thereof, to
         the given axes as a scatter plot.
@@ -377,7 +385,9 @@ class IQDiscriminationFitter(BaseDiscriminationFitter):
         data = np.array(x_data)
 
         for idx in range(n_qubits):
-            axs[idx].scatter(data[:, idx], data[:, n_qubits + idx], alpha=0.5,
+            axs[idx].scatter(data[:, idx],
+                             data[:, n_qubits + idx],
+                             alpha=0.5,
                              color=color)
 
     @abstractmethod
@@ -399,9 +409,10 @@ class IQDiscriminationFitter(BaseDiscriminationFitter):
 
 class LinearIQDiscriminator(IQDiscriminationFitter):
     """Linear discriminant analysis discriminator for IQ data."""
-
-    def __init__(self, cal_results: Union[Result, List[Result]],
-                 qubit_mask: List[int], expected_states: List[str] = None,
+    def __init__(self,
+                 cal_results: Union[Result, List[Result]],
+                 qubit_mask: List[int],
+                 expected_states: List[str] = None,
                  standardize: bool = False,
                  schedules: Union[List[str], List[Schedule]] = None,
                  discriminator_parameters: dict = None):
@@ -431,10 +442,13 @@ class LinearIQDiscriminator(IQDiscriminationFitter):
         shrink = discriminator_parameters.get('shrinkage', None)
         store_cov = discriminator_parameters.get('store_covariance', False)
         tol = discriminator_parameters.get('tol', 1.0e-4)
+        priors = discriminator_parameters.get('priors', None)
 
-        self._lda = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrink,
+        self._lda = LinearDiscriminantAnalysis(solver=solver,
+                                               shrinkage=shrink,
                                                store_covariance=store_cov,
-                                               tol=tol)
+                                               tol=tol,
+                                               priors=priors)
 
         # Also sets the x and y data.
         IQDiscriminationFitter.__init__(self, cal_results, qubit_mask,
@@ -449,7 +463,6 @@ class LinearIQDiscriminator(IQDiscriminationFitter):
         """Fits the discriminator using self._xdata and self._ydata."""
         if len(self._xdata) == 0:
             return
-
         self._lda.fit(self._xdata, self._ydata)
         self._fitted = True
 
@@ -468,9 +481,10 @@ class LinearIQDiscriminator(IQDiscriminationFitter):
 
 class QuadraticIQDiscriminator(IQDiscriminationFitter):
     """Quadratic discriminant analysis discriminator for IQ data."""
-
-    def __init__(self, cal_results: Union[Result, List[Result]],
-                 qubit_mask: List[int], expected_states: List[str] = None,
+    def __init__(self,
+                 cal_results: Union[Result, List[Result]],
+                 qubit_mask: List[int],
+                 expected_states: List[str] = None,
                  standardize: bool = False,
                  schedules: Union[List[str], List[Schedule]] = None,
                  discriminator_parameters: dict = None):
@@ -498,8 +512,10 @@ class QuadraticIQDiscriminator(IQDiscriminationFitter):
 
         store_cov = discriminator_parameters.get('store_covariance', False)
         tol = discriminator_parameters.get('tol', 1.0e-4)
+        priors = discriminator_parameters.get('priors', None)
 
         self._qda = QuadraticDiscriminantAnalysis(store_covariance=store_cov,
+                                                  priors=priors,
                                                   tol=tol)
 
         # Also sets the x and y data.
@@ -538,9 +554,11 @@ class SklearnIQDiscriminator(IQDiscriminationFitter):
     A generic discriminant analysis discriminator for IQ data that
     takes an sklearn classifier as an argument.
     """
-
-    def __init__(self, classifier, cal_results: Union[Result, List[Result]],
-                 qubit_mask: List[int], expected_states: List[str] = None,
+    def __init__(self,
+                 classifier,
+                 cal_results: Union[Result, List[Result]],
+                 qubit_mask: List[int],
+                 expected_states: List[str] = None,
                  standardize: bool = False,
                  schedules: Union[List[str], List[Schedule]] = None):
         """
@@ -584,8 +602,7 @@ class SklearnIQDiscriminator(IQDiscriminationFitter):
             if not callable(getattr(classifier, name, None)):
                 raise QiskitError(
                     'Classifier of type "{}" does not have a callable "{}"'
-                    ' method.'.format(type(classifier).__name__, name)
-                )
+                    ' method.'.format(type(classifier).__name__, name))
 
     def fit(self):
         """ Fits the discriminator using self._xdata and self._ydata. """
