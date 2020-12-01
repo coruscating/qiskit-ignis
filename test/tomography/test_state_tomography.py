@@ -21,6 +21,7 @@ import unittest
 import numpy
 import qiskit
 from qiskit import QuantumRegister, QuantumCircuit, Aer
+from qiskit.circuit.library import U3Gate
 from qiskit.quantum_info import state_fidelity, partial_trace, Statevector
 import qiskit.ignis.verification.tomography as tomo
 import qiskit.ignis.verification.tomography.fitters.cvx_fit as cvx_fit
@@ -109,7 +110,7 @@ class TestStateTomography(unittest.TestCase):
     def test_complex_1_qubit_circuit(self):
         q = QuantumRegister(1)
         circ = QuantumCircuit(q)
-        circ.u3(1, 1, 1, q[0])
+        circ.append(U3Gate(1, 1, 1), [q[0]])
 
         rho, psi = run_circuit_and_tomography(circ, q, self.method)
         F_bell = state_fidelity(psi, rho, validate=False)
@@ -123,9 +124,26 @@ class TestStateTomography(unittest.TestCase):
         q = QuantumRegister(3)
         circ = QuantumCircuit(q)
         for j in range(3):
-            circ.u3(*rand_angles(), q[j])
+            circ.append(U3Gate(*rand_angles()), [q[j]])
 
         rho, psi = run_circuit_and_tomography(circ, q, self.method)
+        F_bell = state_fidelity(psi, rho, validate=False)
+        self.assertAlmostEqual(F_bell, 1, places=1)
+
+    def test_fitter_string_input(self):
+        q3 = QuantumRegister(3)
+        bell = QuantumCircuit(q3)
+        bell.h(q3[0])
+        bell.cx(q3[0], q3[1])
+        bell.cx(q3[1], q3[2])
+
+        qst = tomo.state_tomography_circuits(bell, q3)
+        qst_names = [circ.name for circ in qst]
+        job = qiskit.execute(qst, Aer.get_backend('qasm_simulator'),
+                             shots=5000)
+        tomo_fit = tomo.StateTomographyFitter(job.result(), qst_names)
+        rho = tomo_fit.fit(method=self.method)
+        psi = Statevector.from_instruction(bell)
         F_bell = state_fidelity(psi, rho, validate=False)
         self.assertAlmostEqual(F_bell, 1, places=1)
 
